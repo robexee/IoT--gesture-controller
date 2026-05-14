@@ -1,13 +1,19 @@
 #include <Arduino.h>
+#include "Led.h"
+#include "Buzzer.h"
 
-// Definirea pinilor
-const int buzzerPin = 2; // Conectează firul de semnal al buzzerului aici
-const int led1Pin = 23;  // Conectează Anodul (+) primului LED aici
-const int led2Pin = 22;  // Conectează Anodul (+) celui de-al doilea LED aici
+Led redLed(23);
+Led yellowLed(22);
+Buzzer buzzer(2);
 
 void setup() {
+    buzzer.begin();
+    redLed.begin();
+    yellowLed.begin();
+    buzzer.beep(3000);
 }
 
 void loop() {
-
+    redLed.on();
+    yellowLed.on();
 }
