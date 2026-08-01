@@ -3,7 +3,7 @@
 
 Buzzer::Buzzer(int gpioPin)
 {
-   pin = gpioPin; 
+   pin = gpioPin;
 }
 
 void Buzzer::begin()
@@ -12,19 +12,7 @@ void Buzzer::begin()
     digitalWrite(pin, LOW);
 }
 
-void Buzzer::on()
+void Buzzer::setActive(bool active)
 {
-    digitalWrite(pin, HIGH);
-}
-
-void Buzzer::off()
-{
-    digitalWrite(pin, LOW);
-}
-
-void Buzzer::beep(int time)
-{
-    on();
-    delay(time);
-    off();
+    digitalWrite(pin, active ? HIGH : LOW);
 }

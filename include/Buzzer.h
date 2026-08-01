@@ -9,9 +9,7 @@ public:
     Buzzer(int gpioPin);
 
     void begin();
-    void off();
-    void on();
-    void beep(int time);
+    void setActive(bool active);
 };
 
 #endif

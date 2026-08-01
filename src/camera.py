@@ -20,6 +20,21 @@ import mediapipe as mp
 FINGER_NAMES = ("Thumb", "Index", "Middle", "Ring", "Pinky")
 
 
+class MajorityVoteSmoother:
+    """Smooths a stream of noisy values into the most frequent one seen in a short rolling window."""
+
+    def __init__(self, window_size: int = 5):
+        self._buffer = deque(maxlen=window_size)
+
+    def push(self, value):
+        """Adds a value and returns the current smoothed (most common) value."""
+        self._buffer.append(value)
+        return Counter(self._buffer).most_common(1)[0][0]
+
+    def reset(self):
+        self._buffer.clear()
+
+
 class FingerIdentifier:
     """Detects a hand in a frame and identifies which single finger is raised."""
 
@@ -32,7 +47,7 @@ class FingerIdentifier:
             min_tracking_confidence=tracking_conf,
         )
         self._landmark_style = self._mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=3, circle_radius=1)
-        self._buffer = deque(maxlen=buffer_size)
+        self._smoother = MajorityVoteSmoother(buffer_size)
 
     def process(self, rgb_frame):
         """Runs hand detection on an RGB frame; returns the raw MediaPipe results."""
@@ -46,17 +61,15 @@ class FingerIdentifier:
     def identify_finger(self, hand_landmarks, hand_label: str):
         """Returns the smoothed name of the single raised finger, or None."""
         raised = self._raised_fingers(hand_landmarks, hand_label)
-        raw_result = FINGER_NAMES[raised.index(True)] if raised.count(True) == 1 else None
-
-        self._buffer.append(raw_result)
-        return Counter(self._buffer).most_common(1)[0][0]
+        return self._smoother.push(self._name_of_raised(raised))
 
     def reset(self):
         """Clears the smoothing buffer, e.g. when no hand is visible."""
-        self._buffer.clear()
+        self._smoother.reset()
 
     @staticmethod
     def _raised_fingers(hand_landmarks, hand_label: str):
+        """Returns which of the 5 fingers are raised, as booleans in Thumb..Pinky order."""
         lm = hand_landmarks.landmark
         thumb_raised = lm[4].x < lm[3].x if hand_label == "Right" else lm[4].x > lm[3].x
         return [
@@ -66,6 +79,13 @@ class FingerIdentifier:
             lm[16].y < lm[14].y,
             lm[20].y < lm[18].y,
         ]
+
+    @staticmethod
+    def _name_of_raised(raised):
+        """Maps a raised-fingers list to a single finger name, or None if it's not exactly one finger."""
+        if raised.count(True) != 1:
+            return None
+        return FINGER_NAMES[raised.index(True)]
 
 
 def resize_frame(frame, scale: float = 0.75):

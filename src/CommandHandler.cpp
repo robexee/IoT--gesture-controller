@@ -13,28 +13,48 @@ CommandHandler::CommandHandler(
 
 void CommandHandler::handleCommand(const char* command)
 {
-    if(strcmp(command, "/buzz") == 0)
+    if(strcmp(command, "/buzz_on") == 0)
     {
-        buzzer ->beep(300);
+        handleBuzz(true);
     }
 
-    else if(strcmp(command,"/red_on") == 0)
+    else if(strcmp(command, "/buzz_off") == 0)
     {
-        redLed ->on();
+        handleBuzz(false);
     }
 
-    else if(strcmp(command,"/red_off") == 0)
+    else if(strcmp(command, "/red_on") == 0)
     {
-        redLed -> off();
+        handleRed(true);
     }
 
-    else if(strcmp(command,"/yellow_on") == 0)
+    else if(strcmp(command, "/red_off") == 0)
     {
-        yellowLed -> on();
+        handleRed(false);
     }
 
-    else if(strcmp(command,"/yellow_off") == 0)
+    else if(strcmp(command, "/yellow_on") == 0)
     {
-        yellowLed -> off();
+        handleYellow(true);
     }
+
+    else if(strcmp(command, "/yellow_off") == 0)
+    {
+        handleYellow(false);
+    }
+}
+
+void CommandHandler::handleRed(bool on)
+{
+    if (on) redLed->on(); else redLed->off();
+}
+
+void CommandHandler::handleYellow(bool on)
+{
+    if (on) yellowLed->on(); else yellowLed->off();
+}
+
+void CommandHandler::handleBuzz(bool on)
+{
+    buzzer->setActive(on);
 }

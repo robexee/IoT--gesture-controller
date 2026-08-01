@@ -9,48 +9,35 @@ WifiCommunicator::WifiCommunicator(const char* id, const char* parola, unsigned 
 
 bool WifiCommunicator::connect()
 {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+        return true;
+    }
+
     Serial.println("Connecting to WiFi: ");
     Serial.println(ssid);
 
     WiFi.begin(ssid, password);
 
-    int tries = 0;
-    while (WiFi.status() != WL_CONNECTED && tries < 20)
+    if (!waitForConnection(20))
     {
-        delay(500);
-        Serial.print('.');
-        tries++;
-    }
-
-    if (WiFi.status() == WL_CONNECTED)
-    {
-        Serial.println("\nWiFi connected");
-        Serial.print("Ip addres is: ");
-        Serial.println(WiFi.localIP());
-
-        udp.begin(localUdpPort);
-        return true;
-    } else {
         Serial.println("\nError: Couldn't connect to WiFi");
         return false;
     }
-}
 
-void WifiCommunicator::reconnect()
-{
-    if (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.println("Connection lost! Trying to reconnect...");
-        WiFi.disconnect();
-        connect();
-    }
+    Serial.println("\nWiFi connected");
+    Serial.print("Ip addres is: ");
+    Serial.println(WiFi.localIP());
+
+    beginUdpListener();
+    return true;
 }
 
 const char* WifiCommunicator::getCommand()
 {
     int packSize = udp.parsePacket();
 
-    if (packSize) 
+    if (packSize)
     {
         int len = udp.read(incomingPacket, 255);
         if (len > 0 && len < 255)
@@ -60,4 +47,21 @@ const char* WifiCommunicator::getCommand()
         return incomingPacket;
     }
     return "";
+}
+
+bool WifiCommunicator::waitForConnection(int maxTries)
+{
+    int tries = 0;
+    while (WiFi.status() != WL_CONNECTED && tries < maxTries)
+    {
+        delay(500);
+        Serial.print('.');
+        tries++;
+    }
+    return WiFi.status() == WL_CONNECTED;
+}
+
+void WifiCommunicator::beginUdpListener()
+{
+    udp.begin(localUdpPort);
 }

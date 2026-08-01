@@ -12,11 +12,13 @@ private:
     WiFiUDP udp;
     char incomingPacket[255];
 
+    bool waitForConnection(int maxTries);
+    void beginUdpListener();
+
 public:
     WifiCommunicator(const char* id, const char* parola, unsigned int port);
 
     bool connect();
-    void reconnect();
     const char* getCommand();
 };
 

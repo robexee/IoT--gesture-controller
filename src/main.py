@@ -14,6 +14,47 @@ import cv2 as cv
 from camera import FingerIdentifier, resize_frame
 
 FONT = cv.FONT_HERSHEY_COMPLEX
+WINDOW_NAME = "Finger Identifier"
+
+
+def preprocess_frame(frame):
+    """Mirrors the frame for a natural view and scales it up for display."""
+    frame = cv.flip(frame, 1)
+    return resize_frame(frame, 2)
+
+
+def compute_fps(prev_frame_time):
+    """Returns (fps, now) given the timestamp of the previous frame."""
+    now = time.time()
+    fps = 1 / (now - prev_frame_time) if prev_frame_time else 0
+    return fps, now
+
+
+def draw_fps(frame, fps):
+    cv.putText(frame, f"FPS: {int(fps)}", (frame.shape[1] - 150, 40), FONT, 1, (255, 255, 255), 1)
+
+
+def draw_finger_label(frame, finger):
+    cv.putText(frame, f"Finger: {finger or '-'}", (10, 40), FONT, 1, (255, 255, 255), 1)
+
+
+def detect_finger(identifier, frame):
+    """Runs finger detection on a frame, drawing hand landmarks in place.
+
+    Returns the identified finger name, or None if no hand is visible.
+    """
+    rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+    results = identifier.process(rgb_frame)
+
+    if not results.multi_hand_landmarks:
+        identifier.reset()
+        return None
+
+    hand_landmarks = results.multi_hand_landmarks[0]
+    hand_label = results.multi_handedness[0].classification[0].label
+
+    identifier.draw_landmarks(frame, hand_landmarks)
+    return identifier.identify_finger(hand_landmarks, hand_label)
 
 
 def main():
@@ -26,30 +67,14 @@ def main():
         if not has_frame:
             break
 
-        frame = cv.flip(frame, 1)
-        frame = resize_frame(frame, 2)
-        rgb_frame = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
+        frame = preprocess_frame(frame)
+        fps, prev_frame_time = compute_fps(prev_frame_time)
+        draw_fps(frame, fps)
 
-        now = time.time()
-        fps = 1 / (now - prev_frame_time) if prev_frame_time else 0
-        prev_frame_time = now
-        cv.putText(frame, f"FPS: {int(fps)}", (frame.shape[1] - 150, 40), FONT, 1, (255, 255, 255), 1)
+        finger = detect_finger(identifier, frame)
+        draw_finger_label(frame, finger)
 
-        results = identifier.process(rgb_frame)
-
-        if results.multi_hand_landmarks:
-            hand_landmarks = results.multi_hand_landmarks[0]
-            hand_label = results.multi_handedness[0].classification[0].label
-
-            finger = identifier.identify_finger(hand_landmarks, hand_label)
-            identifier.draw_landmarks(frame, hand_landmarks)
-
-            cv.putText(frame, f"Finger: {finger or '-'}", (10, 40), FONT, 1, (255, 255, 255), 1)
-        else:
-            identifier.reset()
-
-        cv.imshow("Finger Identifier", frame)
-
+        cv.imshow(WINDOW_NAME, frame)
         if cv.waitKey(10) & 0xFF == ord("q"):
             break
 

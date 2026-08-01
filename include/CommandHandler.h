@@ -12,6 +12,10 @@ private:
 
     Buzzer* buzzer;
 
+    void handleRed(bool on);
+    void handleYellow(bool on);
+    void handleBuzz(bool on);
+
 public:
     CommandHandler(
         Led* red,

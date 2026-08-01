@@ -22,14 +22,14 @@ CommandHandler commandHandler(
 void setup() {
     Serial.begin(115200);
     buzzer.begin();
-    buzzer.off();
+    buzzer.setActive(false);
     redLed.begin();
     yellowLed.begin();
     wifi.connect();
 }
 
 void loop() {
-    wifi.reconnect();
+    wifi.connect();
 
     const char* command = wifi.getCommand();
     if(strlen(command) > 0)
