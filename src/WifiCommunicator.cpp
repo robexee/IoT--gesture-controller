@@ -53,7 +53,7 @@ const char* WifiCommunicator::getCommand()
     if (packSize) 
     {
         int len = udp.read(incomingPacket, 255);
-        if (len > 0)
+        if (len > 0 && len < 255)
         {
             incomingPacket[len] = '\0';
         }
