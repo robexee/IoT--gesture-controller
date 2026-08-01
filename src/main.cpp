@@ -9,8 +9,8 @@ Led yellowLed(22);
 Buzzer buzzer(2);
 
 WifiCommunicator wifi(
-    "Orange-54A4",
-    "tTQExQ4uSbS4b6ubfA",
+    "YOUR WIFI USERNAME",
+    "YOUR WIFI PASSWORD",
     4210
 );
 
