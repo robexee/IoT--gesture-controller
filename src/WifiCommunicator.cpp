@@ -1,10 +1,9 @@
 #include "WifiCommunicator.h"
 
-WifiCommunicator::WifiCommunicator(const char* id, const char* parola, unsigned int port)
+WifiCommunicator::WifiCommunicator(const char* id, const char* parola)
 {
     ssid = id;
     password = parola;
-    localUdpPort = port;
 }
 
 bool WifiCommunicator::connect()
@@ -29,24 +28,7 @@ bool WifiCommunicator::connect()
     Serial.print("Ip addres is: ");
     Serial.println(WiFi.localIP());
 
-    beginUdpListener();
     return true;
-}
-
-const char* WifiCommunicator::getCommand()
-{
-    int packSize = udp.parsePacket();
-
-    if (packSize)
-    {
-        int len = udp.read(incomingPacket, 255);
-        if (len > 0 && len < 255)
-        {
-            incomingPacket[len] = '\0';
-        }
-        return incomingPacket;
-    }
-    return "";
 }
 
 bool WifiCommunicator::waitForConnection(int maxTries)
@@ -59,9 +41,4 @@ bool WifiCommunicator::waitForConnection(int maxTries)
         tries++;
     }
     return WiFi.status() == WL_CONNECTED;
-}
-
-void WifiCommunicator::beginUdpListener()
-{
-    udp.begin(localUdpPort);
 }

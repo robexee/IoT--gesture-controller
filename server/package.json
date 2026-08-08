@@ -1,0 +1,13 @@
+{
+  "name": "buzzer-relay-server",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Relay server: forwards buzzer commands from the desktop controller to the ESP32 over WebSocket.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

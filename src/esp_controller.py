@@ -1,10 +1,9 @@
-import socket
+import websocket
 
 
 class EspController:
-    def __init__(self, ip: str, port: int):
-        self._address = (ip, port)
-        self._socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    def __init__(self, server_url: str):
+        self._ws = websocket.create_connection(f"{server_url}/?role=controller")
         self._last_states = {}
 
     def set_red_led(self, on: bool):
@@ -16,6 +15,9 @@ class EspController:
     def set_buzzer(self, on: bool):
         self._send_if_changed("buzzer", on, "/buzz_on", "/buzz_off")
 
+    def close(self):
+        self._ws.close()
+
     def _send_if_changed(self, key: str, on: bool, on_command: str, off_command: str):
         if self._last_states.get(key) == on:
             return
@@ -23,4 +25,4 @@ class EspController:
         self._send(on_command if on else off_command)
 
     def _send(self, command: str):
-        self._socket.sendto(command.encode(), self._address)
+        self._ws.send(command)

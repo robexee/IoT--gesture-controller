@@ -7,8 +7,8 @@ from esp_controller import EspController
 FONT = cv.FONT_HERSHEY_COMPLEX
 WINDOW_NAME = "Finger Identifier"
 
-ESP32_IP = "192.168.1.27"
-ESP32_PORT = 4210
+"""ADRESA SERVERULUI NODE.JS DE RELAY (nu a ESP32-ului)"""
+SERVER_URL = "ws://192.168.1.37:8080"
 
 NO_FINGERS_RAISED = {name: False for name in FINGER_NAMES}
 
@@ -48,17 +48,25 @@ def detect_raised_fingers(identifier, frame):
     return identifier.get_raised_fingers(hand_landmarks, hand_label)
 
 
-def apply_finger_controls(controller, raised_fingers):
-    controller.set_red_led(raised_fingers["Index"])
+def apply_finger_controls(controller, raised_fingers, red_led_on):
+    controller.set_red_led(red_led_on)
     controller.set_buzzer(raised_fingers["Thumb"])
     controller.set_yellow_led(raised_fingers["Middle"])
+
+
+def toggle_on_rising_edge(index_raised, prev_index_raised, red_led_on):
+    if index_raised and not prev_index_raised:
+        return not red_led_on
+    return red_led_on
 
 
 def main():
     video = cv.VideoCapture(0)
     identifier = FingerIdentifier()
-    controller = EspController(ESP32_IP, ESP32_PORT)
+    controller = EspController(SERVER_URL)
     prev_frame_time = 0.0
+    prev_index_raised = False
+    red_led_on = False
 
     while True:
         has_frame, frame = video.read()
@@ -70,7 +78,10 @@ def main():
         draw_fps(frame, fps)
 
         raised_fingers = detect_raised_fingers(identifier, frame)
-        apply_finger_controls(controller, raised_fingers)
+        red_led_on = toggle_on_rising_edge(raised_fingers["Pinky"], prev_index_raised, red_led_on)
+        prev_index_raised = raised_fingers["Pinky"]
+
+        apply_finger_controls(controller, raised_fingers, red_led_on)
         draw_raised_fingers(frame, raised_fingers)
 
         cv.imshow(WINDOW_NAME, frame)
@@ -79,6 +90,7 @@ def main():
 
     video.release()
     cv.destroyAllWindows()
+    controller.close()
 
 
 if __name__ == "__main__":
